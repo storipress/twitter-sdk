@@ -61,6 +61,6 @@ class RefreshToken extends Request
                 ],
             );
 
-        return ((bool) $response->json('revoked')) ?: true;
+        return (bool) $response->json('revoked');
     }
 }
