@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Storipress\Twitter;
 
 use Illuminate\Http\Client\Factory;
+use Storipress\Twitter\Requests\Me;
 use Storipress\Twitter\Requests\RefreshToken;
 use Storipress\Twitter\Requests\Tweet;
 
@@ -13,6 +14,8 @@ class Twitter
     protected string $token = '';
 
     protected string $userAgent = 'storipress/twitter-sdk (https://github.com/storipress/twitter-sdk; v1.0.0)';
+
+    protected readonly Me $me;
 
     protected readonly Tweet $tweet;
 
@@ -24,6 +27,8 @@ class Twitter
     public function __construct(
         public Factory $http,
     ) {
+        $this->me = new Me($this);
+
         $this->tweet = new Tweet($this);
 
         $this->refreshToken = new RefreshToken($this);
@@ -71,6 +76,11 @@ class Twitter
         $this->userAgent = $userAgent;
 
         return $this;
+    }
+
+    public function me(): Me
+    {
+        return $this->me;
     }
 
     public function tweet(): Tweet
