@@ -6,6 +6,7 @@ namespace Storipress\Twitter\Requests;
 
 use Illuminate\Http\Client\Response;
 use stdClass;
+use Storipress\Twitter\Exceptions\ExpiredAccessToken;
 use Storipress\Twitter\Exceptions\GeneralError;
 use Storipress\Twitter\Exceptions\UnexpectedResponseData;
 use Storipress\Twitter\Objects\Error;
@@ -56,14 +57,7 @@ abstract class Request
         }
 
         if (! $response->successful()) {
-            $exception = new GeneralError(
-                $response->body(),
-                $response->status(),
-            );
-
-            $exception->error = Error::from($data);
-
-            throw $exception;
+            $this->error($response, $data);
         }
 
         return $data;
@@ -80,5 +74,21 @@ abstract class Request
             self::VERSION,
             ltrim($path, '/'),
         );
+    }
+
+    /**
+     * Convert response error to exception.
+     */
+    public function error(Response $response, stdClass $data): void
+    {
+        throw match ($response->status()) {
+            401 => new ExpiredAccessToken(),
+
+            default => new GeneralError(
+                Error::from($data),
+                $response->body(),
+                $response->status(),
+            ),
+        };
     }
 }

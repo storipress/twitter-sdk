@@ -20,6 +20,7 @@ class RefreshToken extends Request
         string $refreshToken,
     ): RefreshTokenObject {
         $response = $this->app->http
+            ->asForm()
             ->withUserAgent($this->app->getUserAgent())
             ->withBasicAuth($clientId, $clientSecret)
             ->post(
@@ -32,10 +33,34 @@ class RefreshToken extends Request
 
         $data = $response->object();
 
-        if (! ($data instanceof stdClass)) {
+        if (! $response->successful() || ! ($data instanceof stdClass)) {
             throw new InvalidRefreshToken();
         }
 
         return RefreshTokenObject::from($data);
+    }
+
+    /**
+     * @param  'access_token'|'refresh_token'  $hint
+     */
+    public function revoke(
+        string $clientId,
+        string $clientSecret,
+        string $token,
+        string $hint,
+    ): bool {
+        $response = $this->app->http
+            ->asForm()
+            ->withUserAgent($this->app->getUserAgent())
+            ->withBasicAuth($clientId, $clientSecret)
+            ->post(
+                $this->url('/oauth2/revoke'),
+                [
+                    'token' => $token,
+                    'token_type_hint' => $hint,
+                ],
+            );
+
+        return ((bool) $response->json('revoked')) ?: true;
     }
 }
